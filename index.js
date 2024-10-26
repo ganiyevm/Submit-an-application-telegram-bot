@@ -1,4 +1,3 @@
-
 const TelegramBot = require('node-telegram-bot-api');
 require('dotenv').config();
 
@@ -83,26 +82,12 @@ function sendMainMenu(chatId, language) {
 function handleMainMenuSelection(selection, chatId, language) {
     if (selection === (language === 'uz' ? 'Ariza qoldirish' : language === 'ru' ? 'Оставить заявку' : 'Submit a request')) {
         const requestInstructions = language === 'uz' ? 
-            'Ariza qoldirish uchun telefon raqamingizni kiriting: ' :
+            'Iltimos, telefon raqamingizni kiriting (masalan, +998XXXXXXXX, 998XXXXXXXXX,XXXXXXXXX): ' :
             language === 'ru' ? 
-            'Пожалуйста, введите ваш номер телефона для подачи заявки: ' :
-            'Please enter your phone number to submit a request: ';
+            'Пожалуйста, введите ваш номер телефона (например, +998XXXXXXXXX,+998XXXXXXXXX,XXXXXXXXX  ): ' :
+            'Please enter your phone number (e.g., +998XXXXXXXXX,+998XXXXXXXXX,XXXXXXXXX): ';
 
-        const contactKeyboard = {
-            reply_markup: {
-                keyboard: [
-                    [{
-                        text: language === 'uz' ? 'Kontakt yuborish' : language === 'ru' ? 'Отправить контакт' : 'Send contact',
-                        request_contact: true // Kontaktni so'raydi
-                    }],
-                    [{ text: language === 'uz' ? 'Menyuga qaytish' : language === 'ru' ? 'Вернуться в меню' : 'Return to menu' }]
-                ],
-                resize_keyboard: true,
-                one_time_keyboard: false,
-            },
-        };
-
-        bot.sendMessage(chatId, requestInstructions, contactKeyboard);
+        bot.sendMessage(chatId, requestInstructions);
     } else if (selection === (language === 'uz' ? 'Arizalarim' : language === 'ru' ? 'Мои заявки' : 'My requests')) {
         const userRequestList = userRequests[chatId] || [];
         let responseMessage;
@@ -151,18 +136,40 @@ function handleMainMenuSelection(selection, chatId, language) {
     } else if (selection === (language === 'uz' ? 'Menyuga qaytish' : language === 'ru' ? 'Вернуться в меню' : 'Return to menu')) {
         sendMainMenu(chatId, language); // Menyuga qaytish
     }
-}
+};
 
-// Kontaktni qabul qilish
-bot.on('contact', (msg) => {
+// Telefon raqamini olish
+bot.on('message', (msg) => {
     const chatId = msg.chat.id;
-    const contact = msg.contact;
+    const text = msg.text;
 
-    if (contact) {
-        userPhoneNumbers[chatId] = contact.phone_number;
-        userNames[chatId] = msg.from.first_name || "No Name"; // Foydalanuvchining ismini olish
+    // If a user has already selected a language and is in the process of submitting a request
+    if (userLanguages[chatId] && !userPhoneNumbers[chatId]) {
+        const phoneRegex = /^(?:\+998\d{9}|998\d{9}|\d{9})$/gm; // Regex for Uzbek phone numbers
 
-        // Manzil so'rash
+        if (phoneRegex.test(text)) {
+            userPhoneNumbers[chatId] = text;
+
+            // Now ask for the user's name
+            const nameRequest = userLanguages[chatId] === 'uz' ? 
+                'Iltimos, ismingizni kiriting: ' :
+                userLanguages[chatId] === 'ru' ? 
+                'Пожалуйста, введите ваше имя: ' :
+                'Please enter your name: ';
+
+            bot.sendMessage(chatId, nameRequest);
+        } else {
+            bot.sendMessage(chatId, userLanguages[chatId] === 'uz' ? 
+                'Iltimos, to\'g\'ri telefon raqamini kiriting (masalan, +99899XXXXXXX):' :
+                userLanguages[chatId] === 'ru' ? 
+                'Пожалуйста, введите правильный номер телефона (например, +99899XXXXXXX):' :
+                'Please enter a valid phone number (e.g., +99899XXXXXXX):');
+        }
+    } else if (userPhoneNumbers[chatId] && !userNames[chatId]) {
+        // Save the user's name
+        userNames[chatId] = text;
+
+        // Ask for the location after getting the name
         const requestLocationMessage = userLanguages[chatId] === 'uz' ?
             'Iltimos, manzilingizni yuboring:' :
             userLanguages[chatId] === 'ru' ?
@@ -190,6 +197,9 @@ bot.on('contact', (msg) => {
         };
 
         bot.sendMessage(chatId, requestLocationMessage, locationKeyboard);
+    } else {
+        // Handle other messages
+        // Your existing logic
     }
 });
 
@@ -199,9 +209,9 @@ bot.on('location', (msg) => {
     const location = msg.location;
 
     if (location) {
-        const channelId = '@mashinabozoruzzzz'; // Sizning kanal ID'ingizni kiriting
+        const channelId = '@arizaberishboti'; // Your channel ID
 
-        // Yangi ariza ID'si
+        // Generate new request ID
         const requestId = Date.now();
         userRequests[chatId] = userRequests[chatId] || [];
         userRequests[chatId].push({
@@ -209,10 +219,10 @@ bot.on('location', (msg) => {
             name: userNames[chatId],
             phone: userPhoneNumbers[chatId],
             location: { latitude: location.latitude, longitude: location.longitude },
-            status: 'Active' // Yangi holat
+            status: 'Active' // New status
         });
 
-        // Kanalga foydalanuvchi ismi, telefon raqami va manzilini yuborish
+        // Send user details to the channel
         const locationMessage = userLanguages[chatId] === 'uz' ?
             `Yangi ariza qabul qilindi:\nID: ${requestId}\nIsm: ${userNames[chatId]}\nTelefon raqami: ${userPhoneNumbers[chatId]}\nManzil: ${location.latitude}, ${location.longitude}` :
             userLanguages[chatId] === 'ru' ?
