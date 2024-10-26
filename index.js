@@ -159,11 +159,11 @@ bot.on('message', (msg) => {
 
             bot.sendMessage(chatId, nameRequest);
         } else {
-            bot.sendMessage(chatId, userLanguages[chatId] === 'uz' ? 
-                'Iltimos, to\'g\'ri telefon raqamini kiriting (masalan, +99899XXXXXXX):' :
-                userLanguages[chatId] === 'ru' ? 
-                'Пожалуйста, введите правильный номер телефона (например, +99899XXXXXXX):' :
-                'Please enter a valid phone number (e.g., +99899XXXXXXX):');
+            bot.sendMessage(chatId, userLanguages[chatId] ===  'uz' ? 
+                'Iltimos, telefon raqamingizni kiriting (masalan, +998XXXXXXXX, 998XXXXXXXXX,XXXXXXXXX): ' :
+                language === 'ru' ? 
+                'Пожалуйста, введите ваш номер телефона (например, +998XXXXXXXXX,+998XXXXXXXXX,XXXXXXXXX  ): ' :
+                'Please enter your phone number (e.g., +998XXXXXXXXX,+998XXXXXXXXX,XXXXXXXXX): ')
         }
     } else if (userPhoneNumbers[chatId] && !userNames[chatId]) {
         // Save the user's name
