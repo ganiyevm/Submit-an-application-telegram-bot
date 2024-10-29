@@ -17,17 +17,60 @@ const languageKeyboard = {
     },
 };
 
+const translations = {
+    'uz': {
+        startMessage: 'Iltimos, tilni tanlang:',
+        mainMenuText: 'Asosiy menyu:',
+        mainMenuDescription: 'Ushbu bot sizga kameralarni o\'rnatish uchun ariza qoldirishda yordam beradi.',
+        requestInstructions: 'Iltimos, telefon raqamingizni kiriting (masalan, +998XXXXXXXX):',
+        nameRequest: 'Iltimos, ismingizni kiriting:',
+        contactInfo: '📞 Bizning telefon raqamimiz: +998997290030\nBizning telegram: @it_kaktus',
+        address: '📍 Yunusobod 19-44-47',
+        submitRequest: 'Ariza qoldirish',
+        myRequests: 'Arizalarim',
+        chooseLanguage: 'Tilni tanlash',
+        contact: 'Biz bilan bog\'lanish',
+        officeAddress: 'Bizning manzil',
+    },
+    'ru': {
+        startMessage: 'Пожалуйста, выберите язык:',
+        mainMenuText: 'Главное меню:',
+        mainMenuDescription: 'Этот бот поможет вам оставить заявку на установку камер.',
+        requestInstructions: 'Пожалуйста, введите ваш номер телефона (например, +998XXXXXXXX):',
+        nameRequest: 'Пожалуйста, введите ваше имя:',
+        contactInfo: '📞 Наш номер телефона: +998997290030\nНаш Telegram: @it_kaktus',
+        address: '📍 Юнусабад 19-44-47',
+        submitRequest: 'Оставить заявку',
+        myRequests: 'Мои заявки',
+        chooseLanguage: 'Выбор языка',
+        contact: 'Связаться с нами',
+        officeAddress: 'Наш адрес',
+    },
+    'en': {
+        startMessage: 'Please choose a language:',
+        mainMenuText: 'Main menu:',
+        mainMenuDescription: 'This bot will assist you in submitting a request for camera installation.',
+        requestInstructions: 'Please enter your phone number (e.g., +998XXXXXXXX):',
+        nameRequest: 'Please enter your name:',
+        contactInfo: '📞 Our phone number: +998997290030\nOur Telegram: @it_kaktus',
+        address: '📍 Yunusobod 19-44-47',
+        submitRequest: 'Submit a request',
+        myRequests: 'My requests',
+        chooseLanguage: 'Choose language',
+        contact: 'Contact us',
+        officeAddress: 'Our address',
+    }
+};
+
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
-    const welcomeMessage = 'Iltimos, tilni tanlang / Пожалуйста, выберите язык / Choose language:';
-    bot.sendMessage(chatId, welcomeMessage, languageKeyboard);
+    bot.sendMessage(chatId, translations['uz'].startMessage, languageKeyboard); // Default language
 });
 
 bot.on('message', (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text;
 
-    // Foydalanuvchi til tanlasa
     if (text === 'O\'zbekcha' || text === 'Русский' || text === 'English') {
         userLanguages[chatId] = text === 'O\'zbekcha' ? 'uz' :
                                 text === 'Русский' ? 'ru' : 'en';
@@ -45,117 +88,64 @@ function sendMainMenu(chatId, language) {
     const mainMenuKeyboard = {
         reply_markup: {
             keyboard: [
-                [{ text: language === 'uz' ? 'Ariza qoldirish' : language === 'ru' ? 'Оставить заявку' : 'Submit a request' }],
-                [{ text: language === 'uz' ? 'Arizalarim' : language === 'ru' ? 'Мои заявки' : 'My requests' },
-                 { text: language === 'uz' ? 'Tilni tanlash' : language === 'ru' ? 'Выбор языка' : 'Choose language' }],
-                [{ text: language === 'uz' ? 'Biz bilan bog\'lanish' : language === 'ru' ? 'Связаться с нами' : 'Contact us' },
-                 { text: language === 'uz' ? 'Bizning manzil' : language === 'ru' ? 'Наш адрес' : 'Our address' }]
+                [{ text: translations[language].submitRequest }],
+                [{ text: translations[language].myRequests },
+                 { text: translations[language].chooseLanguage }],
+                [{ text: translations[language].contact },
+                 { text: translations[language].officeAddress }]
             ],
             resize_keyboard: true,
             one_time_keyboard: false,
         },
     };
 
-    const mainMenuText = language === 'uz' ? 'Asosiy menyu:' :
-                          language === 'ru' ? 'Главное меню:' :
-                          'Main menu:';
-
-    const description = language === 'uz' ?
-        'Ushbu bot sizga kameralarni o\'rnatish uchun ariza qoldirishda yordam beradi.' :
-        language === 'ru' ?
-        'Этот бот поможет вам оставить заявку на установку камер.' :
-        'This bot will assist you in submitting a request for camera installation.';
-
-    bot.sendMessage(chatId, `${mainMenuText}\n${description}`, mainMenuKeyboard);
+    const mainMenuText = `${translations[language].mainMenuText}\n${translations[language].mainMenuDescription}`;
+    bot.sendMessage(chatId, mainMenuText, mainMenuKeyboard);
 }
 
+const menuActions = {
+    'uz': {
+        [translations['uz'].submitRequest]: (chatId) => bot.sendMessage(chatId, translations['uz'].requestInstructions),
+        [translations['uz'].myRequests]: (chatId) => sendUserRequests(chatId, 'uz'),
+        [translations['uz'].chooseLanguage]: (chatId) => bot.sendMessage(chatId, translations['uz'].chooseLanguage, languageKeyboard),
+        [translations['uz'].contact]: (chatId) => bot.sendMessage(chatId, translations['uz'].contactInfo),
+        [translations['uz'].officeAddress]: (chatId) => sendLocation(chatId),
+    },
+    'ru': {
+        [translations['ru'].submitRequest]: (chatId) => bot.sendMessage(chatId, translations['ru'].requestInstructions),
+        [translations['ru'].myRequests]: (chatId) => sendUserRequests(chatId, 'ru'),
+        [translations['ru'].chooseLanguage]: (chatId) => bot.sendMessage(chatId, translations['ru'].chooseLanguage, languageKeyboard),
+        [translations['ru'].contact]: (chatId) => bot.sendMessage(chatId, translations['ru'].contactInfo),
+        [translations['ru'].officeAddress]: (chatId) => sendLocation(chatId),
+    },
+    'en': {
+        [translations['en'].submitRequest]: (chatId) => bot.sendMessage(chatId, translations['en'].requestInstructions),
+        [translations['en'].myRequests]: (chatId) => sendUserRequests(chatId, 'en'),
+        [translations['en'].chooseLanguage]: (chatId) => bot.sendMessage(chatId, translations['en'].chooseLanguage, languageKeyboard),
+        [translations['en'].contact]: (chatId) => bot.sendMessage(chatId, translations['en'].contactInfo),
+        [translations['en'].officeAddress]: (chatId) => sendLocation(chatId),
+    }
+};
+
 function handleMainMenuSelection(selection, chatId, language) {
-    const responses = {
-        'uz': {
-            request: 'Ariza qoldirish',
-            myRequests: 'Arizalarim',
-            chooseLanguage: 'Tilni tanlash',
-            contact: 'Biz bilan bog\'lanish',
-            address: 'Bizning manzil'
-        },
-        'ru': {
-            request: 'Оставить заявку',
-            myRequests: 'Мои заявки',
-            chooseLanguage: 'Выбор языка',
-            contact: 'Связаться с нами',
-            address: 'Наш адрес'
-        },
-        'en': {
-            request: 'Submit a request',
-            myRequests: 'My requests',
-            chooseLanguage: 'Choose language',
-            contact: 'Contact us',
-            address: 'Our address'
-        }
-    };
-
-    const lang = responses[language];
-
-    if (selection === lang.request) {
-        bot.sendMessage(chatId, getRequestInstructions(language));
-    } else if (selection === lang.myRequests) {
-        sendUserRequests(chatId, language);
-    } else if (selection === lang.chooseLanguage) {
-        bot.sendMessage(chatId, 'Iltimos, qulay tilni tanlang:', languageKeyboard);
-    } else if (selection === lang.contact) {
-        bot.sendMessage(chatId, getContactInfo(language));
-    } else if (selection === lang.address) {
-        sendLocation(chatId);
+    const action = menuActions[language][selection];
+    if (action) {
+        action(chatId);
     }
 }
 
-function getRequestInstructions(language) {
-    const instructions = {
-        'uz': 'Iltimos, telefon raqamingizni kiriting (masalan, +998XXXXXXXX, 998XXXXXXXXX,XXXXXXXXX): ',
-        'ru': 'Пожалуйста, введите ваш номер телефона (например, +998XXXXXXXXX,+998XXXXXXXXX,XXXXXXXXX): ',
-        'en': 'Please enter your phone number (e.g., +998XXXXXXXXX,+998XXXXXXXXX,XXXXXXXXX): '
-    };
-    return instructions[language];
-}
-
-function getContactInfo(language) {
-    return language === 'uz' ? 
-        `📞 Bizning telefon raqamimiz: +998997290030\nBizning telegram: @it_kaktus` :
-        language === 'ru' ? 
-        `📞 Наш номер телефона: +998997290030\nНаш Telegram: @it_kaktus` :
-        `📞 Our phone number: +998997290030\nOur Telegram: @it_kaktus`;
-}
-
-function sendLocation(chatId) {
-    const officeLocation = { latitude: 41.37149, longitude: 69.31241 };
-    bot.sendLocation(chatId, officeLocation.latitude, officeLocation.longitude);
-    const addressMessage = '📍 Yunusobod 19-44-47'; // Address text for all languages
-    bot.sendMessage(chatId, addressMessage);
-}
-
-// Telefon raqamini olish
 function handleUserPhoneInput(chatId, text) {
     const phoneRegex = /^(?:\+998\d{9}|998\d{9}|\d{9})$/gm;
     if (phoneRegex.test(text)) {
         userPhoneNumbers[chatId] = text;
-        bot.sendMessage(chatId, getNameRequest(userLanguages[chatId]));
+        bot.sendMessage(chatId, translations[userLanguages[chatId]].nameRequest);
     } else {
-        bot.sendMessage(chatId, getRequestInstructions(userLanguages[chatId]));
+        bot.sendMessage(chatId, translations[userLanguages[chatId]].requestInstructions);
     }
-}
-
-function getNameRequest(language) {
-    const requests = {
-        'uz': 'Iltimos, ismingizni kiriting: ',
-        'ru': 'Пожалуйста, введите ваше имя: ',
-        'en': 'Please enter your name: '
-    };
-    return requests[language];
 }
 
 function handleUserNameInput(chatId, text) {
     userNames[chatId] = text;
-    const requestLocationMessage = getLocationRequest(userLanguages[chatId]);
     const locationKeyboard = {
         reply_markup: {
             keyboard: [[{
@@ -168,19 +158,15 @@ function handleUserNameInput(chatId, text) {
             one_time_keyboard: true,
         },
     };
-    bot.sendMessage(chatId, requestLocationMessage, locationKeyboard);
+    bot.sendMessage(chatId, translations[userLanguages[chatId]].locationRequest, locationKeyboard);
 }
 
-function getLocationRequest(language) {
-    const requests = {
-        'uz': 'Iltimos, manzilingizni yuboring:',
-        'ru': 'Пожалуйста, отправьте ваше местоположение:',
-        'en': 'Please send your location:'
-    };
-    return requests[language];
+function sendLocation(chatId) {
+    const officeLocation = { latitude: 41.37149, longitude: 69.31241 };
+    bot.sendLocation(chatId, officeLocation.latitude, officeLocation.longitude);
+    bot.sendMessage(chatId, translations[userLanguages[chatId]].address);
 }
 
-// Manzilni qabul qilish
 bot.on('location', (msg) => {
     const chatId = msg.chat.id;
     const location = msg.location;
@@ -211,10 +197,6 @@ function getLocationMessage(language, requestId, chatId) {
     const user = userNames[chatId];
     const phone = userPhoneNumbers[chatId];
     const location = userRequests[chatId].find(req => req.id === requestId).location;
-    
-    return language === 'uz' ?
-        `Yangi ariza qabul qilindi:\nID: ${requestId}\nIsm: ${user}\nTelefon raqami: ${phone}\nManzil: ${location.latitude}, ${location.longitude}` :
-        language === 'ru' ?
-        `Новая заявка принята:\nID: ${requestId}\nИмя: ${user}\nНомер телефона: ${phone}\nАдрес: ${location.latitude}, ${location.longitude}` :
-        `New request received:\nID: ${requestId}\nName: ${user}\nPhone number: ${phone}\nAddress: ${location.latitude}, ${location.longitude}`;
+
+    return `${translations[language].newRequestReceived}\nID: ${requestId}\nIsm: ${user}\nTelefon raqami: ${phone}\nManzil: ${location.latitude}, ${location.longitude}`;
 }
